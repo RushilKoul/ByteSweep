@@ -3,7 +3,7 @@
 
 #### Package Requirements:
 - Pillow (pip)
-- ffmpeg must be added to `PATH`
+- [ffmpeg](https://www.ffmpeg.org) must be added to `PATH`
 
 ### Usage:
 > `python ByteSweep.py "Path\To\Folder"`

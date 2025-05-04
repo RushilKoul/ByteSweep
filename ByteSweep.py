@@ -23,7 +23,7 @@ TEXT_EXTENSIONS = {
 
     ### EXPERIMENTAL
     # ".fbx",
-    ".obj", ".psd",
+    ".obj", ".psd", ".aep"
 }
 
 AUDIO_EXTENSIONS = {
@@ -33,6 +33,9 @@ AUDIO_EXTENSIONS = {
 VIDEO_EXTENSIONS = {
     ".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpeg", ".mpg"
 }
+
+# SPECIAL FILES
+BLENDER_EXTENSIONS = { ".blend", ".blend1" }
 
 
 # yes my terminal looks nice
@@ -106,9 +109,12 @@ def analyze_folder(folder_path):
     text_deletions = []
     audio_deletions = []
     video_deletions = []
+    misc_file_deletions = []
     renames = []
 
     print(f"\n{BOLD}{CYAN}🔍 Scanning files and analyzing...{RESET}")
+
+    text_file_groups = {}
 
     for file in Path(folder_path).rglob("*"):
         if file.is_file():
@@ -137,23 +143,11 @@ def analyze_folder(folder_path):
                 else:
                     image_deletions.append(file)
 
-            # TEXT FILES
+            # TEXT FILES (group and process later)
             elif suffix in TEXT_EXTENSIONS:
-                print(f"  - Checking text file: {file.name}")
-                try:
-                    with open(file, 'r', encoding='utf-8') as f:
-                        head = f.read(2048)
-                        if not head.strip():
-                            raise Exception("Empty or unreadable file.")
-                    print(f"{GREEN}✅ Valid text file:{RESET} {file.name}")
-                    base_name = get_base_filename(file.name)
-                    new_name = file.parent / base_name
-                    if (file.name != base_name and
-                        (not new_name.exists() or new_name in text_deletions or new_name.resolve() == file.resolve())):
-                        renames.append((file, new_name))
-                except Exception as e:
-                    print(f"  {RED}[!] Invalid text file: {file} - {e}{RESET}")
-                    text_deletions.append(file)
+                base_name = get_base_filename(file.name)
+                key = (file.parent, base_name)
+                text_file_groups.setdefault(key, []).append(file)
 
             # AUDIO FILES        
             elif suffix in AUDIO_EXTENSIONS:
@@ -180,6 +174,64 @@ def analyze_folder(folder_path):
                 else:
                     video_deletions.append(file)
 
+            elif suffix in BLENDER_EXTENSIONS:
+                print(f"  - Checking Blender file: {file.name}")
+                try:
+                    with open(file, 'rb') as f:
+                        head = f.read(12)
+                        if not head.startswith(b'BLENDER'):
+                            raise Exception("Missing BLENDER header. invalid file")
+                    
+                    print(f"{GREEN}✅ Valid Blender file:{RESET} {file.name}")
+                    
+                    base_name = get_base_filename(file.name)
+                    new_name = file.parent / base_name
+                    if (file.name != base_name and
+                        (not new_name.exists() or new_name in misc_file_deletions or new_name.resolve() == file.resolve())):
+                        renames.append((file, new_name))
+
+                except Exception as e:
+                    print(f"{RED}[!] Invalid Blender file: {file} - {e}{RESET}")
+                    misc_file_deletions.append(file)
+
+
+    # now handle grouped text files
+    for (parent, base_name), variants in text_file_groups.items():
+        print(f"\n{CYAN}📄 Group: {base_name}{RESET}")
+        best_candidate = None
+        best_ratio = 1.0
+
+        for file in variants:
+            try:
+                size = file.stat().st_size
+                with open(file, 'rb') as f:
+                    head = f.read(2048)
+                non_printable = sum(1 for b in head if chr(b) not in string.printable)
+                ratio = non_printable / len(head) if head else 1
+            except Exception as e:
+                size = 0
+                ratio = 1
+                print(f"  {RED}[!] Could not read {file.name}: {e}{RESET}")
+
+            print(f"  - {file.name} | size: {size} bytes | non-printable ratio: {ratio:.2f}")
+
+            if size > 0 and ratio < best_ratio:
+                best_candidate = file
+                best_ratio = ratio
+
+        if best_candidate:
+            print(f"  {GREEN}=> Keeping: {best_candidate.name}{RESET}")
+            base_name_file = parent / base_name
+            if (best_candidate.name != base_name and
+                (not base_name_file.exists() or base_name_file.resolve() == best_candidate.resolve())):
+                renames.append((best_candidate, base_name_file))
+
+            for file in variants:
+                if file != best_candidate:
+                    text_deletions.append(file)
+        else:
+            print(f"  {YELLOW}=> No valid text file found in group. Deleting all.{RESET}")
+            text_deletions.extend(variants)
 
     print(f"\n{'='*60}")
     print(f"{YELLOW}🗑️  Image files marked for deletion (broken images):{RESET} {len(image_deletions)}")
@@ -191,7 +243,7 @@ def analyze_folder(folder_path):
     confirm = input(f"{BOLD}⚠️  Proceed with deletion and renaming? (Y/N): {RESET}").strip().lower()
 
     if confirm.lower() == 'y':
-        for file in image_deletions + text_deletions + audio_deletions + video_deletions:
+        for file in image_deletions + text_deletions + audio_deletions + video_deletions + misc_file_deletions:
             try:
                 file.unlink()
                 print(f"{RED}🗑️  Deleted:{RESET} {file}")

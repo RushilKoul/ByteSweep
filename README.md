@@ -9,6 +9,7 @@
 > `python ByteSweep.py "Path\To\Folder"`
 ### Supported Filetypes:
 - All text/YAML types. `.html`,`.css`,`.js`, `.txt`,`.xml`,`.json`,`.ini`,`.bat`,`.cs`, Unity files, etc.
+- Experimental but work so far: `.psd`, `.obj`, `.fbx`
 - Images: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.webp`, `.gif`
 - Audio files: `.mp3`, `.wav`, `.flac`, `.aac`, `.ogg`, `.m4a`, `.wma`, `.alac`, `.opus`
 - Video files: `.mp4`, `.avi`, `.mov`, `.mkv`, `.webm`, `.flv`, `.wmv`, `.mpeg`, `.mpg`

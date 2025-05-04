@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 import string
 from PIL import Image  # for images
+from mutagen import File as MutagenFile
 
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif"}
@@ -18,6 +19,9 @@ TEXT_EXTENSIONS = {
 
     ".csv", ".tsv", ".log", ".toml", ".cfg", ".env"
 }
+
+AUDIO_EXTENSIONS = {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".aac", ".opus"}
+
 
 # yes my terminal looks nice
 GREEN = "\033[92m"
@@ -39,9 +43,21 @@ def is_image_valid(file_path):
         print(f"  {RED}[!] Invalid image file: {file_path} - {e}{RESET}")
         return False
 
+def is_audio_valid(file_path):
+    try:
+        audio = MutagenFile(file_path)
+        if audio is None or not hasattr(audio, "info") or audio.info is None:
+            raise Exception("Unsupported or corrupted audio format.")
+        return True
+    except Exception as e:
+        print(f"  {RED}[!] Invalid audio file: {file_path} - {e}{RESET}")
+        return False
+
+
 def analyze_folder(folder_path):
     image_deletions = []
     text_deletions = []
+    audio_deletions = []
     renames = []
 
     print(f"\n{BOLD}{CYAN}🔍 Scanning files and analyzing...{RESET}")
@@ -91,15 +107,30 @@ def analyze_folder(folder_path):
                     print(f"  {RED}[!] Invalid text file: {file} - {e}{RESET}")
                     text_deletions.append(file)
 
+            # AUDIO FILES        
+            elif suffix in AUDIO_EXTENSIONS:
+                print(f"  - Checking audio file: {file.name}")
+                if is_audio_valid(file):
+                    print(f"{GREEN}✅ Valid audio file:{RESET} {file.name}")
+                    base_name = get_base_filename(file.name)
+                    new_name = file.parent / base_name
+                    if (file.name != base_name and
+                        (not new_name.exists() or new_name in audio_deletions or new_name.resolve() == file.resolve())):
+                        renames.append((file, new_name))
+                else:
+                    audio_deletions.append(file)  # or create audio_deletions if you want a separate list
+
+
     print(f"\n{'='*60}")
     print(f"{YELLOW}🗑️  Image files marked for deletion (broken images):{RESET} {len(image_deletions)}")
     print(f"{YELLOW}🗑️  Text files marked for deletion (broken text):{RESET} {len(text_deletions)}")
+    print(f"{YELLOW}🗑️  Audio files marked for deletion (broken audio):{RESET} {len(audio_deletions)}")
     print(f"{YELLOW}✏️  Files to rename:{RESET} {len(renames)}")
     
     confirm = input(f"{BOLD}⚠️  Proceed with deletion and renaming? (Y/N): {RESET}").strip().lower()
 
     if confirm == 'y':
-        for file in image_deletions + text_deletions:
+        for file in image_deletions + text_deletions + audio_deletions:
             try:
                 file.unlink()
                 print(f"{RED}🗑️  Deleted:{RESET} {file}")

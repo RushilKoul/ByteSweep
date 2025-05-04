@@ -19,7 +19,11 @@ TEXT_EXTENSIONS = {
 
     ".unity", ".prefab", ".mat", ".meta", ".anim", ".controller", ".meta", ".sln", ".csproj", ".asset", ".cs",
 
-    ".csv", ".tsv", ".log", ".toml", ".cfg", ".env"
+    ".csv", ".tsv", ".log", ".toml", ".cfg", ".env",
+
+    ### EXPERIMENTAL
+    # ".fbx",
+    ".obj", ".psd",
 }
 
 AUDIO_EXTENSIONS = {
@@ -186,7 +190,7 @@ def analyze_folder(folder_path):
     
     confirm = input(f"{BOLD}⚠️  Proceed with deletion and renaming? (Y/N): {RESET}").strip().lower()
 
-    if confirm == 'y':
+    if confirm.lower() == 'y':
         for file in image_deletions + text_deletions + audio_deletions + video_deletions:
             try:
                 file.unlink()

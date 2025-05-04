@@ -26,6 +26,10 @@ AUDIO_EXTENSIONS = {
     ".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".alac", ".opus"
 }
 
+VIDEO_EXTENSIONS = {
+    ".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpeg", ".mpg"
+}
+
 
 # yes my terminal looks nice
 GREEN = "\033[92m"
@@ -70,11 +74,34 @@ def is_audio_valid(file_path):
         print(f"{RED}[!] Invalid audio file: {file_path} - {e}{RESET}")
         return False
 
+def is_video_valid(file_path):
+    try:
+        result = subprocess.run(
+            ['ffprobe', '-v', 'error', '-select_streams', 'v:0',
+             '-show_entries', 'stream=duration', '-of', 'default=noprint_wrappers=1:nokey=1',
+             str(file_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        if result.returncode != 0 or not result.stdout.strip():
+            raise Exception("ffprobe failed or returned no duration.")
+
+        duration = float(result.stdout.strip())
+        if duration <= 1:
+            raise Exception(f"Duration too short: {duration:.2f}s")
+
+        return True
+    except Exception as e:
+        print(f"{RED}[!] Invalid video file: {file_path} - {e}{RESET}")
+        return False
 
 def analyze_folder(folder_path):
     image_deletions = []
     text_deletions = []
     audio_deletions = []
+    video_deletions = []
     renames = []
 
     print(f"\n{BOLD}{CYAN}🔍 Scanning files and analyzing...{RESET}")
@@ -135,7 +162,19 @@ def analyze_folder(folder_path):
                         (not new_name.exists() or new_name in audio_deletions or new_name.resolve() == file.resolve())):
                         renames.append((file, new_name))
                 else:
-                    audio_deletions.append(file)  # or create audio_deletions if you want a separate list
+                    audio_deletions.append(file)
+
+            elif suffix in VIDEO_EXTENSIONS:
+                print(f"  - Checking video file: {file.name}")
+                if is_video_valid(file):
+                    print(f"{GREEN}✅ Valid video file:{RESET} {file.name}")
+                    base_name = get_base_filename(file.name)
+                    new_name = file.parent / base_name
+                    if (file.name != base_name and
+                        (not new_name.exists() or new_name in video_deletions or new_name.resolve() == file.resolve())):
+                        renames.append((file, new_name))
+                else:
+                    video_deletions.append(file)
 
 
     print(f"\n{'='*60}")

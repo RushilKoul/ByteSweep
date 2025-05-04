@@ -17,7 +17,7 @@ TEXT_EXTENSIONS = {
     ".cpp", ".php", ".rb", ".go", ".rs", ".sh", ".bat",
     ".ini", ".md", ".txt", ".vue",
 
-    ".unity", ".prefab", ".mat", ".meta", ".anim", ".controller", ".meta", ".sln", ".csproj", ".asset", ".cs",
+    ".unity", ".unitypackage", ".prefab", ".mat", ".meta", ".anim", ".controller", ".meta", ".sln", ".csproj", ".asset", ".cs",
 
     ".csv", ".tsv", ".log", ".toml", ".cfg", ".env",
 
@@ -36,6 +36,8 @@ VIDEO_EXTENSIONS = {
 
 # SPECIAL FILES
 BLENDER_EXTENSIONS = { ".blend", ".blend1" }
+
+DLL_EXTENSIONS = { ".dll" }
 
 
 # yes my terminal looks nice
@@ -193,6 +195,25 @@ def analyze_folder(folder_path):
                 except Exception as e:
                     print(f"{RED}[!] Invalid Blender file: {file} - {e}{RESET}")
                     misc_file_deletions.append(file)
+            elif suffix in DLL_EXTENSIONS:
+                print(f"  - Checking .dll file: {file.name}")
+                try:
+                    with open(file, 'rb') as f:
+                        head = f.read(2)
+                        if not head.startswith(b'MZ'):
+                            raise Exception("Missing dll header. invalid file")
+                    
+                    print(f"{GREEN}✅ Valid DLL file:{RESET} {file.name}")
+                    
+                    base_name = get_base_filename(file.name)
+                    new_name = file.parent / base_name
+                    if (file.name != base_name and
+                        (not new_name.exists() or new_name in misc_file_deletions or new_name.resolve() == file.resolve())):
+                        renames.append((file, new_name))
+
+                except Exception as e:
+                    print(f"{RED}[!] Invalid DLL file: {file} - {e}{RESET}")
+                    misc_file_deletions.append(file)
 
 
     # now handle grouped text files
@@ -236,6 +257,7 @@ def analyze_folder(folder_path):
     print(f"\n{'='*60}")
     print(f"{YELLOW}🗑️  Image files marked for deletion (broken images):{RESET} {len(image_deletions)}")
     print(f"{YELLOW}🗑️  Text files marked for deletion (broken text):{RESET} {len(text_deletions)}")
+    print(f"{YELLOW}🗑️  Misc. files marked for deletion (broken data):{RESET} {len(misc_file_deletions)}")
     print(f"{YELLOW}🗑️  Audio files marked for deletion (broken audio):{RESET} {len(audio_deletions)}")
     print(f"{YELLOW}🗑️  Video files marked for deletion (broken video):{RESET} {len(video_deletions)}")
     print(f"{YELLOW}✏️  Files to rename:{RESET} {len(renames)}")

@@ -8,12 +8,19 @@
 ### Usage:
 > `python ByteSweep.py "Path\To\Folder"`
 ### Supported Filetypes:
-- All text/YAML types. `.html`,`.css`,`.js`, `.txt`,`.xml`,`.json`,`.ini`,`.bat`,`.cs`, Unity files, etc.
-- Experimental but work so far: `.psd`, `.obj`, `.fbx`
-- Images: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tiff`, `.webp`, `.gif`
-- Audio files: `.mp3`, `.wav`, `.flac`, `.aac`, `.ogg`, `.m4a`, `.wma`, `.alac`, `.opus`
-- Video files: `.mp4`, `.avi`, `.mov`, `.mkv`, `.webm`, `.flv`, `.wmv`, `.mpeg`, `.mpg`
+- All utf-8 endcoded files: `.html` `.css` `.js` `.txt` `.xml` `.json` `.ini` `.bat` `.log` `.cs` Unity project files, and many more.
+- Experimental but work so far: `.obj` `.fbx`
+- Images: `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.gif`
+- Audio files: `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma` `.alac` `.opus`
+- Video files: `.mp4` `.m4v` `.avi` `.mov` `.mkv` `.webm` `.flv` `.wmv` `.mpeg` `.mpg`
+- Adobe: `.psd`
+- Microsoft Office: `.docx` `.xlsx` `.pptx`
+- Blender Files: `.blend` `.blend1`
+- Other files: `.pdf` `.jar` `.ttf` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest`
 
 ### Contribution
-- The code can probably work with more filetypes given that they fall under the general supported categories.
+- This tool can be made to work with even more filetypes relatively easily.
+- The code works for non-media files if you can *mostly* decode the file in `utf-8` (first 2KiB) or there is a constant file signature in the header
 - Feel free to add extension types to see if it just works
+> **Note**: Media files like images, video and audio files rely on `Pillow` and `ffmpeg`, so if these libraries support some file extension I've not included here, it should just work by adding it in.
+- If you want to make a pull request, go ahead, I'll review changes and merge.

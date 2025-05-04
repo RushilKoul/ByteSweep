@@ -8,22 +8,24 @@ import subprocess # calling ffmpeg commands
 
 
 IMAGE_EXTENSIONS = {
-    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif"
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif", ".ico"
 }
 
 TEXT_EXTENSIONS = {
     ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx",
     ".json", ".xml", ".yml", ".yaml", ".py", ".java", ".c",
-    ".cpp", ".php", ".rb", ".go", ".rs", ".sh", ".bat",
-    ".ini", ".md", ".txt", ".vue",
+    ".cpp", ".php", ".rb", ".go", ".rs", ".sh", ".bat", ".cmd",
+    ".vbs", ".ini", ".md", ".txt", ".vue", ".env",
 
     ".unity", ".unitypackage", ".prefab", ".mat", ".meta", ".anim", ".controller", ".meta", ".sln", ".csproj", ".asset", ".cs",
 
-    ".csv", ".tsv", ".log", ".toml", ".cfg", ".env",
+    ".csv", ".tsv", ".log", ".toml", ".cfg", ".env", ".spec", ".manifest", ".toc",
+
+    ".mcmeta",
 
     ### EXPERIMENTAL
-    # ".fbx",
-    ".obj", ".psd", ".aep"
+    ".fbx",".obj", 
+    # ".aep",
 }
 
 AUDIO_EXTENSIONS = {
@@ -31,20 +33,42 @@ AUDIO_EXTENSIONS = {
 }
 
 VIDEO_EXTENSIONS = {
-    ".mp4", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpeg", ".mpg"
+    ".mp4", ".m4v", ".avi", ".mov", ".mkv", ".webm", ".flv", ".wmv", ".mpeg", ".mpg"
 }
 
-# SPECIAL FILES
-BLENDER_EXTENSIONS = { ".blend", ".blend1" }
+"""
+checking file signatures for atypical files. goes something like this:
+"file extension": [number_of_bytes_to_read, expected_header]
 
-DLL_EXTENSIONS = { ".dll" }
-
+essentially i'm providing a header size then seeing if the file header
+does actually contain the expected signature for the given file type.
+"""
 MISC_SIGNATURES = {
-    ".blend":[12,'BLENDER'],
-    ".blend1":[12,'BLENDER'],
-    ".dll":[2, 'MZ'],
-}
+    ".blend":[7,'BLENDER'],
+    ".blend1":[7,'BLENDER'],
 
+    ".dll":[2, 'MZ'],
+    ".exe":[2, 'MZ'],
+    ".sys":[2, 'MZ'],
+    ".ess":[4, 'TESV'], # skyrim savefiles lol
+    ".pdf":[4, '%PDF'],
+    ".zip":[4,'PK\x03\x04'],
+    ".sqlite":[6,'SQLite'],
+    ".rar":[7,'\x52\x61\x72\x21\x1A\x07\x00'],
+    
+    #adobe
+    ".psd":[4, '8BPS'],
+
+    # office
+    ".docx":[4,'PK\x03\x04'], # same signature as .zip as a .docx is basically a zip of .xml data
+    ".xlsx":[4,'PK\x03\x04'],
+    ".pptx":[4,'PK\x03\x04'], 
+
+    ".jar":[4,'PK\x03\x04'], 
+    ".ttf": [5, '\x00\x01\x00\x00\x00'],
+    ".pyz":[3,'PYZ'],
+
+}
 
 # yes my terminal looks nice
 GREEN = "\033[92m"
@@ -55,6 +79,8 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 
 def get_base_filename(name):
+    if re.match(r"^_\d+\.env$", name):
+        return ".env" #.env files malfunction
     return re.sub(r"_\d+(?=\.[^\.]+$)", "", name)
 
 def is_image_valid(file_path):
@@ -69,20 +95,16 @@ def is_image_valid(file_path):
 def is_audio_valid(file_path):
     try:
         result = subprocess.run(
-            ['ffprobe', '-v', 'error', '-select_streams', 'a:0',
-             '-show_entries', 'stream=duration', '-of', 'default=noprint_wrappers=1:nokey=1',
-             str(file_path)],
+            ['ffmpeg', '-v', 'error', '-i', str(file_path), '-f', 'null', '-'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
 
-        if result.returncode != 0 or not result.stdout.strip():
-            raise Exception("ffprobe failed or returned no duration.")
-
-        duration = float(result.stdout.strip())
-        if duration <= 1:
-            raise Exception(f"Duration too short: {duration:.3f}s")
+        if result.returncode != 0:
+            raise Exception(f"FFmpeg error (code {result.returncode})") 
+        elif "Header missing" in result.stderr:
+            raise Exception("Header missing") 
 
         return True
     except Exception as e:
@@ -163,7 +185,7 @@ def analyze_folder(folder_path):
                     image_deletions.append(file)
 
             # TEXT FILES (group and process later)
-            elif suffix in TEXT_EXTENSIONS:
+            elif suffix in TEXT_EXTENSIONS or file.name.lower() in TEXT_EXTENSIONS: # .env files have no suffix
                 base_name = get_base_filename(file.name)
                 key = (file.parent, base_name)
                 text_file_groups.setdefault(key, []).append(file)
@@ -223,7 +245,7 @@ def analyze_folder(folder_path):
                 ratio = 1
                 print(f"  {RED}[!] Could not read {file.name}: {e}{RESET}")
 
-            print(f"  - {file.name} | size: {size} bytes | non-printable ratio: {ratio:.2f}")
+            print(f"  - {file.name} | size: {size} bytes | non-printable ratio: {ratio:.3f}")
 
             if size > 0 and ratio < best_ratio:
                 best_candidate = file
@@ -233,7 +255,7 @@ def analyze_folder(folder_path):
             print(f"  {GREEN}=> Keeping: {best_candidate.name}{RESET}")
             base_name_file = parent / base_name
             if (best_candidate.name != base_name and
-                (not base_name_file.exists() or base_name_file.resolve() == best_candidate.resolve())):
+                (not base_name_file.exists() or base_name_file in text_deletions or base_name_file.resolve() != best_candidate.resolve())):
                 renames.append((best_candidate, base_name_file))
 
             for file in variants:
@@ -246,9 +268,9 @@ def analyze_folder(folder_path):
     print(f"\n{'='*60}")
     print(f"{YELLOW}🗑️  Image files marked for deletion (broken images):{RESET} {len(image_deletions)}")
     print(f"{YELLOW}🗑️  Text files marked for deletion (broken text):{RESET} {len(text_deletions)}")
-    print(f"{YELLOW}🗑️  Misc. files marked for deletion (broken data):{RESET} {len(misc_file_deletions)}")
     print(f"{YELLOW}🗑️  Audio files marked for deletion (broken audio):{RESET} {len(audio_deletions)}")
     print(f"{YELLOW}🗑️  Video files marked for deletion (broken video):{RESET} {len(video_deletions)}")
+    print(f"{YELLOW}🗑️  Misc. files marked for deletion (broken data):{RESET} {len(misc_file_deletions)}")
     print(f"{YELLOW}✏️  Files to rename:{RESET} {len(renames)}")
     
     confirm = input(f"{BOLD}⚠️  Proceed with deletion and renaming? (Y/N): {RESET}").strip().lower()

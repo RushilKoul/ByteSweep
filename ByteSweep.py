@@ -3,8 +3,8 @@ import sys
 import re
 from pathlib import Path
 import string
-from PIL import Image  # for images
-import subprocess
+from PIL import Image  # images
+import subprocess # calling ffmpeg commands
 
 
 IMAGE_EXTENSIONS = {
@@ -204,7 +204,7 @@ def analyze_folder(folder_path):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print(f"{RED}Usage: python analyze_files.py \"Path/To/Folder\"{RESET}")
+        print(f"{RED}Usage: python ByteSweep.py \"Path/To/Folder\"{RESET}")
         sys.exit(1)
 
     folder = sys.argv[1]

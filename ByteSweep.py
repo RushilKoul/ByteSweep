@@ -4,10 +4,12 @@ import re
 from pathlib import Path
 import string
 from PIL import Image  # for images
-from mutagen import File as MutagenFile
+import subprocess
 
 
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif"}
+IMAGE_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif"
+}
 
 TEXT_EXTENSIONS = {
     ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx",
@@ -20,7 +22,9 @@ TEXT_EXTENSIONS = {
     ".csv", ".tsv", ".log", ".toml", ".cfg", ".env"
 }
 
-AUDIO_EXTENSIONS = {".mp3", ".flac", ".ogg", ".wav", ".m4a", ".aac", ".opus"}
+AUDIO_EXTENSIONS = {
+    ".mp3", ".wav", ".flac", ".aac", ".ogg", ".m4a", ".wma", ".alac", ".opus"
+}
 
 
 # yes my terminal looks nice
@@ -45,12 +49,25 @@ def is_image_valid(file_path):
 
 def is_audio_valid(file_path):
     try:
-        audio = MutagenFile(file_path)
-        if audio is None or not hasattr(audio, "info") or audio.info is None:
-            raise Exception("Unsupported or corrupted audio format.")
+        result = subprocess.run(
+            ['ffprobe', '-v', 'error', '-select_streams', 'a:0',
+             '-show_entries', 'stream=duration', '-of', 'default=noprint_wrappers=1:nokey=1',
+             str(file_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+
+        if result.returncode != 0 or not result.stdout.strip():
+            raise Exception("ffprobe failed or returned no duration.")
+
+        duration = float(result.stdout.strip())
+        if duration <= 1:
+            raise Exception(f"Duration too short: {duration:.2f}s")
+
         return True
     except Exception as e:
-        print(f"  {RED}[!] Invalid audio file: {file_path} - {e}{RESET}")
+        print(f"{RED}[!] Invalid audio file: {file_path} - {e}{RESET}")
         return False
 
 

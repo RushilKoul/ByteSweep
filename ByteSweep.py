@@ -67,7 +67,7 @@ def is_audio_valid(file_path):
 
         duration = float(result.stdout.strip())
         if duration <= 1:
-            raise Exception(f"Duration too short: {duration:.2f}s")
+            raise Exception(f"Duration too short: {duration:.3f}s")
 
         return True
     except Exception as e:
@@ -89,8 +89,8 @@ def is_video_valid(file_path):
             raise Exception("ffprobe failed or returned no duration.")
 
         duration = float(result.stdout.strip())
-        if duration <= 1:
-            raise Exception(f"Duration too short: {duration:.2f}s")
+        if duration <= 0.5:
+            raise Exception(f"Duration too short: {duration:.3f}s")
 
         return True
     except Exception as e:
@@ -181,12 +181,13 @@ def analyze_folder(folder_path):
     print(f"{YELLOW}🗑️  Image files marked for deletion (broken images):{RESET} {len(image_deletions)}")
     print(f"{YELLOW}🗑️  Text files marked for deletion (broken text):{RESET} {len(text_deletions)}")
     print(f"{YELLOW}🗑️  Audio files marked for deletion (broken audio):{RESET} {len(audio_deletions)}")
+    print(f"{YELLOW}🗑️  Video files marked for deletion (broken video):{RESET} {len(video_deletions)}")
     print(f"{YELLOW}✏️  Files to rename:{RESET} {len(renames)}")
     
     confirm = input(f"{BOLD}⚠️  Proceed with deletion and renaming? (Y/N): {RESET}").strip().lower()
 
     if confirm == 'y':
-        for file in image_deletions + text_deletions + audio_deletions:
+        for file in image_deletions + text_deletions + audio_deletions + video_deletions:
             try:
                 file.unlink()
                 print(f"{RED}🗑️  Deleted:{RESET} {file}")

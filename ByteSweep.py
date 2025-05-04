@@ -39,6 +39,12 @@ BLENDER_EXTENSIONS = { ".blend", ".blend1" }
 
 DLL_EXTENSIONS = { ".dll" }
 
+MISC_SIGNATURES = {
+    ".blend":[12,'BLENDER'],
+    ".blend1":[12,'BLENDER'],
+    ".dll":[2, 'MZ'],
+}
+
 
 # yes my terminal looks nice
 GREEN = "\033[92m"
@@ -104,6 +110,17 @@ def is_video_valid(file_path):
         return True
     except Exception as e:
         print(f"{RED}[!] Invalid video file: {file_path} - {e}{RESET}")
+        return False
+
+def is_misc_valid(file_path, filetype):
+    try:
+        with open (file_path, 'rb') as f:
+            head = f.read(MISC_SIGNATURES[f"{filetype}"][0])
+            if not head.startswith(MISC_SIGNATURES[f"{filetype}"][1].encode('utf-8')):
+                raise Exception("Missing starting header, invalid file")
+            return True
+    except Exception as e:
+        print(f"{RED}[!] Invalid {file_path.suffix} file: {file_path} - {e}{RESET}")
         return False
 
 def analyze_folder(folder_path):
@@ -176,45 +193,17 @@ def analyze_folder(folder_path):
                 else:
                     video_deletions.append(file)
 
-            elif suffix in BLENDER_EXTENSIONS:
-                print(f"  - Checking Blender file: {file.name}")
-                try:
-                    with open(file, 'rb') as f:
-                        head = f.read(12)
-                        if not head.startswith(b'BLENDER'):
-                            raise Exception("Missing BLENDER header. invalid file")
-                    
-                    print(f"{GREEN}✅ Valid Blender file:{RESET} {file.name}")
-                    
+            elif suffix in MISC_SIGNATURES:
+                print(f"  - Checking {file.suffix} file: {file.name}")
+                if is_misc_valid(file, file.suffix):
+                    print(f"{GREEN}✅ Valid {file.suffix} file:{RESET} {file.name}")
                     base_name = get_base_filename(file.name)
                     new_name = file.parent / base_name
                     if (file.name != base_name and
                         (not new_name.exists() or new_name in misc_file_deletions or new_name.resolve() == file.resolve())):
                         renames.append((file, new_name))
-
-                except Exception as e:
-                    print(f"{RED}[!] Invalid Blender file: {file} - {e}{RESET}")
+                else:
                     misc_file_deletions.append(file)
-            elif suffix in DLL_EXTENSIONS:
-                print(f"  - Checking .dll file: {file.name}")
-                try:
-                    with open(file, 'rb') as f:
-                        head = f.read(2)
-                        if not head.startswith(b'MZ'):
-                            raise Exception("Missing dll header. invalid file")
-                    
-                    print(f"{GREEN}✅ Valid DLL file:{RESET} {file.name}")
-                    
-                    base_name = get_base_filename(file.name)
-                    new_name = file.parent / base_name
-                    if (file.name != base_name and
-                        (not new_name.exists() or new_name in misc_file_deletions or new_name.resolve() == file.resolve())):
-                        renames.append((file, new_name))
-
-                except Exception as e:
-                    print(f"{RED}[!] Invalid DLL file: {file} - {e}{RESET}")
-                    misc_file_deletions.append(file)
-
 
     # now handle grouped text files
     for (parent, base_name), variants in text_file_groups.items():

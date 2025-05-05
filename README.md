@@ -8,15 +8,16 @@
 ### Usage:
 > `python ByteSweep.py "Path\To\Folder"`
 ### Supported Filetypes:
-- All utf-8 endcoded files: `.html` `.css` `.js` `.txt` `.xml` `.json` `.ini` `.bat` `.log` `.cs` Unity project files, and many more.
-- Experimental but work so far: `.obj` `.fbx`
+- All utf-8 endcoded files: `.html` `.css` `.js` `.txt` `.xml` `.json` `.ini` `.bat` `.log` `.cs` Unity project files, and more.
 - Images: `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.gif`
 - Audio files: `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma` `.alac` `.opus`
 - Video files: `.mp4` `.m4v` `.avi` `.mov` `.mkv` `.webm` `.flv` `.wmv` `.mpeg` `.mpg`
 - Adobe: `.psd`
 - Microsoft Office: `.docx` `.xlsx` `.pptx`
+- OpenDocument files: `.odp` `.ods` `.odt`
 - Blender Files: `.blend` `.blend1`
 - Other files: `.pdf` `.jar` `.ttf` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest`
+- Experimental but work so far: `.obj` `.fbx`
 
 ### Contribution
 - This tool can be made to work with even more filetypes relatively easily.

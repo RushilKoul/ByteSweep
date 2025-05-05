@@ -60,9 +60,14 @@ MISC_SIGNATURES = {
     ".psd":[4, '8BPS'],
 
     # office
-    ".docx":[4,'PK\x03\x04'], # same signature as .zip as a .docx is basically a zip of .xml data
+    # same signature as .zip as a these are
+    # essentially zip files of xml data
+    ".docx":[4,'PK\x03\x04'],
     ".xlsx":[4,'PK\x03\x04'],
     ".pptx":[4,'PK\x03\x04'], 
+    ".odp":[4,'PK\x03\x04'],
+    ".ods":[4,'PK\x03\x04'],
+    ".odt":[4,'PK\x03\x04'], 
 
     ".jar":[4,'PK\x03\x04'], 
     ".ttf": [5, '\x00\x01\x00\x00\x00'],
@@ -250,7 +255,7 @@ def analyze_folder(folder_path):
             if size > 0 and ratio < best_ratio:
                 best_candidate = file
                 best_ratio = ratio
-
+            
         if best_candidate:
             print(f"  {GREEN}=> Keeping: {best_candidate.name}{RESET}")
             base_name_file = parent / base_name
@@ -260,7 +265,18 @@ def analyze_folder(folder_path):
 
             for file in variants:
                 if file != best_candidate:
-                    text_deletions.append(file)
+                    if ratio == best_ratio:
+                        """
+                        this next part is only true if the program has already encountered a
+                        working file, meaning the working best ratio has been set to 0.000...
+                        finding a file that is equal to this means that this file is 
+                        also not corrupted but it contains some other data (may not be relevant)
+                        but we cannot delete that file just yet.
+                        """
+                        print(f"  {GREEN}=> Also Keeping: {file.name}{RESET}")
+                    else:
+                        text_deletions.append(file)
+
         else:
             print(f"  {YELLOW}=> No valid text file found in group. Deleting all.{RESET}")
             text_deletions.extend(variants)

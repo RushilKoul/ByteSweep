@@ -145,6 +145,7 @@ def is_video_valid(file_path):
     
 def is_misc_valid(file_path, filetype):
     try:
+        filetype = filetype.lower()
         read_len, expected = MISC_SIGNATURES[filetype]
         with open(file_path, 'rb') as f:
             head = f.read(read_len)
@@ -157,8 +158,10 @@ def is_misc_valid(file_path, filetype):
         else:
             if not head.startswith(expected.encode('utf-8')):
                 raise Exception("Missing starting header, invalid file")
+
         return True
     except Exception as e:
+        print(e)
         print(f"{RED}[!] Invalid {file_path.suffix} file: {file_path} - {e}{RESET}")
         return False
 

@@ -1,16 +1,30 @@
 # ByteSweep
-### A simple python CLI tool for removing corrupted duplicates of files.
+**ByteSweep** is a lightweight command-line Python utility designed to detect and remove **corrupted** or **redundant duplicate files** in a directory — particularly useful for post-data recovery cleanup.
 
+## Features
+- Detects **corrupt or invalid files** based on:
+  - Binary file headers
+  - UTF-8 decodability
+- Detects and removes **redundant duplicates** of the same file type
+- Supports a *wide* range of file types
+- Automatically **renames** files back to their correct names pre-duplication
+  
 #### Package Requirements:
-- Pillow (pip)
-- [ffmpeg](https://www.ffmpeg.org/download.html) must be added to `PATH`
+- **Python 3.7+**
+- **[Pillow](https://pypi.org/project/Pillow/)**
+```bash
+pip install Pillow
+```
+- **[ffmpeg](https://www.ffmpeg.org/download.html)** must be installed and added to `PATH`
 
-### Usage:
-> `python ByteSweep.py "Path\To\Folder"`
-### Supported Filetypes:
-- All utf-8 endcoded files: `.html` `.css` `.js` `.txt` `.xml` `.json` `.ini` `.bat` `.log` `.cs` Unity project files, and more.
+## Usage:
+```bash
+python ByteSweep.py "Path\To\Folder"
+```
+## Supported Filetypes:
+- Partially or fully utf-8 endcoded files: `.html` `.css` `.js` `.txt` `.xml` `.json` `.ini` `.bat` `.log` `.cs` Unity project files, and more.
 - Images: `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.gif`
-- Audio files: `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma` `.alac` `.opus`
+- Audio files:  `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma` `.alac` `.opus`
 - Video files: `.mp4` `.m4v` `.avi` `.mov` `.mkv` `.webm` `.flv` `.wmv` `.mpeg` `.mpg`
 - Adobe: `.psd`
 - Microsoft Office: `.docx` `.xlsx` `.pptx`
@@ -18,11 +32,35 @@
 - Blender Files: `.blend` `.blend1`
 - Fonts: `.ttf` `.otf`
 - Other files: `.pdf` `.jar` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest` `.fbx`
-- Experimental but work so far: `.obj` 
+- Experimental but work so far: `.obj`
 
-### Contribution
-- This tool can be made to work with even more filetypes relatively easily.
-- The code works for non-media files if you can *mostly* decode the file in `utf-8` (first 2KiB) or there is a constant file signature in the header
-- Feel free to add extension types to see if it just works
-> **Note**: Media files like images, video and audio files rely on `Pillow` and `ffmpeg`, so if these libraries support some file extension I've not included here, it should just work by adding it in.
-- If you want to make a pull request, go ahead, I'll review changes and merge.
+**For the full list of supported files**, check out the code.
+
+## How does it work?
+ByteSweep uses two key heuristics:
+### 1. **File Signature Check**
+- Known binary formats (e.g., `.blend`, `.aep`, `.docx`) have consistent starting byte sequences
+- ByteSweep checks the file header for these expected sequences
+### 2. **UTF-8 Sanity Check**
+- Files are grouped and scanned for high ratios of printable characters in the first \~2KiB
+
+## Contribution
+ByteSweep is modular and easily extensible.
+
+### Want to support a new file type?
+- **Media Files**: Make sure it's testable either with Pillow or FFmpeg
+- **Other Files**: Add it to the file signature table or UTF-8 validation list
+
+#### How to Contribute:
+1. Fork the repo
+2. Create a branch for your changes
+3. Add new formats, improve detection logic, or enhance CLI
+4. Open a Pull Request
+
+### Note
+- Not all files can be validated — formats without clear headers or decodable content may be skipped or misclassified.
+- You are responsible for reviewing deletion — the tool prints all operations
+- > **Pro Tip:** Comment out actual `.unlink()` or renaming lines during testing!
+
+### Special Thanks
+- https://en.wikipedia.org/wiki/List_of_file_signatures was an extremely useful resource during the development of this project.

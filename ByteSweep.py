@@ -8,7 +8,7 @@ import subprocess # calling ffmpeg commands
 
 
 IMAGE_EXTENSIONS = {
-    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif", ".ico"
+    ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif", ".ico", ".tga"
 }
 
 TEXT_EXTENSIONS = {
@@ -23,9 +23,10 @@ TEXT_EXTENSIONS = {
 
     ".mcmeta",
 
+    '.mtl',
+
     ### EXPERIMENTAL
     ".obj", ".rdp", ".pem"
-    # ".aep",
 }
 
 AUDIO_EXTENSIONS = {
@@ -44,43 +45,38 @@ essentially i'm providing a header size then seeing if the file header
 does actually contain the expected signature for the given file type.
 """
 MISC_SIGNATURES = {
-    ".blend":[7,'BLENDER'],
-    ".blend1":[7,'BLENDER'],
 
-    ".dll":[2, 'MZ'],
-    ".exe":[2, 'MZ'],
-    ".sys":[2, 'MZ'],
-    ".ess":[4, 'TESV'], # skyrim savefiles lol
-    ".pdf":[4, '%PDF'],
-    ".zip":[4,'PK\x03\x04'],
+    ".blend":[7,'BLENDER'], ".blend1":[7,'BLENDER'],
+    ".fbx": [18, 'Kaydara FBX Binary'],
+
+    ".dll":[2, 'MZ'], ".exe":[2, 'MZ'], ".sys":[2, 'MZ'],
+    ".msi":[8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
+
     ".sqlite":[6,'SQLite'],
+    ".zip":[4,'PK\x03\x04'],
     ".rar":[7,'\x52\x61\x72\x21\x1A\x07\x00'],
-    
+    ".swf": [4, ("CWS", "FWS")],
+    ".pyz":[3,'PYZ'],
+
     #adobe
-    ".psd":[4, '8BPS'],
+    ".pdf":[4, '%PDF'],
+    ".psd":[4, '8BPS'], ".aep": [4, ("JSXJ", "RIFX")],
 
     # office
     # same signature as .zip as a these are
     # essentially zip files of xml data
-    ".docx":[4,'PK\x03\x04'],
-    ".xlsx":[4,'PK\x03\x04'],
-    ".pptx":[4,'PK\x03\x04'], 
+    ".docx":[4,'PK\x03\x04'], ".xlsx":[4,'PK\x03\x04'], ".pptx":[4,'PK\x03\x04'], 
 
     ".doc": [8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
     ".xls": [8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
     ".ppt": [8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
 
-    ".odp":[4,'PK\x03\x04'],
-    ".ods":[4,'PK\x03\x04'],
-    ".odt":[4,'PK\x03\x04'], 
+    ".odp":[4,'PK\x03\x04'], ".ods":[4,'PK\x03\x04'], ".odt":[4,'PK\x03\x04'], 
 
     ".jar":[4,'PK\x03\x04'], 
-    ".ttf": [5, '\x00\x01\x00\x00\x00'],
-    ".otf": [4, 'OTTO'],
-    ".pyz":[3,'PYZ'],
+    ".ttf": [5, '\x00\x01\x00\x00\x00'], ".otf": [4, 'OTTO'],
+    ".ess":[4, 'TESV'], ".fos":[11, 'FO3SAVEGAME'], # skyrim save-files lol
     
-    ".msi":[8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
-    ".fbx": [18, 'Kaydara FBX Binary']
 }
 
 # yes my terminal looks nice
@@ -146,17 +142,26 @@ def is_video_valid(file_path):
     except Exception as e:
         print(f"{RED}[!] Invalid video file: {file_path} - {e}{RESET}")
         return False
-
+    
 def is_misc_valid(file_path, filetype):
     try:
-        with open (file_path, 'rb') as f:
-            head = f.read(MISC_SIGNATURES[f"{filetype}"][0])
-            if not head.startswith(MISC_SIGNATURES[f"{filetype}"][1].encode('utf-8')):
+        read_len, expected = MISC_SIGNATURES[filetype]
+        with open(file_path, 'rb') as f:
+            head = f.read(read_len)
+
+        ### handle both tuples in case of multiple file signatures
+        ### as well as normal string input. flexibility woooooooo
+        if isinstance(expected, tuple):
+            if not any(head.startswith(sig.encode('utf-8')) for sig in expected):
+                raise Exception("Missing starting header (multi), invalid file")
+        else:
+            if not head.startswith(expected.encode('utf-8')):
                 raise Exception("Missing starting header, invalid file")
-            return True
+        return True
     except Exception as e:
         print(f"{RED}[!] Invalid {file_path.suffix} file: {file_path} - {e}{RESET}")
         return False
+
 
 def analyze_folder(folder_path):
     image_deletions = []
@@ -280,10 +285,11 @@ def analyze_folder(folder_path):
                 renames.append((best_candidates[0], base_name_file))
 
             for file in variants:
-                if file != best_candidates:
+                if file != best_candidates[0]:
+                    print(f"  {RED}=> Deleting: {file.name}{RESET}")
                     text_deletions.append(file)
 
-        elif len(best_candidates) > 1:
+        elif len(best_candidates) > 1:  
             # Pick the one closest to base_name as the "main" file
             chosen = None
             for candidate in best_candidates:
@@ -307,6 +313,7 @@ def analyze_folder(folder_path):
 
             for file in variants:
                 if file not in best_candidates:
+                    print(f"  {RED}=> Deleting: {file.name}{RESET}")
                     text_deletions.append(file)
 
         else:

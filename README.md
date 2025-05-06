@@ -16,8 +16,9 @@
 - Microsoft Office: `.docx` `.xlsx` `.pptx`
 - OpenDocument files: `.odp` `.ods` `.odt`
 - Blender Files: `.blend` `.blend1`
-- Other files: `.pdf` `.jar` `.ttf` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest`
-- Experimental but work so far: `.obj` `.fbx`
+- Fonts: `.ttf` `.otf`
+- Other files: `.pdf` `.jar` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest` `.fbx`
+- Experimental but work so far: `.obj` 
 
 ### Contribution
 - This tool can be made to work with even more filetypes relatively easily.

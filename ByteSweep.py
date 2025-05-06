@@ -15,7 +15,7 @@ TEXT_EXTENSIONS = {
     ".html", ".htm", ".css", ".js", ".ts", ".jsx", ".tsx",
     ".json", ".xml", ".yml", ".yaml", ".py", ".java", ".c",
     ".cpp", ".php", ".rb", ".go", ".rs", ".sh", ".bat", ".cmd",
-    ".vbs", ".ini", ".md", ".txt", ".vue", ".env",
+    ".vbs", ".ini", ".md", ".txt", ".vue", ".env", ".java",
 
     ".unity", ".unitypackage", ".prefab", ".mat", ".meta", ".anim", ".controller", ".meta", ".sln", ".csproj", ".asset", ".cs",
 
@@ -24,7 +24,7 @@ TEXT_EXTENSIONS = {
     ".mcmeta",
 
     ### EXPERIMENTAL
-    ".fbx",".obj", 
+    ".obj", ".rdp", ".pem"
     # ".aep",
 }
 
@@ -65,14 +65,22 @@ MISC_SIGNATURES = {
     ".docx":[4,'PK\x03\x04'],
     ".xlsx":[4,'PK\x03\x04'],
     ".pptx":[4,'PK\x03\x04'], 
+
+    ".doc": [8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
+    ".xls": [8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
+    ".ppt": [8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
+
     ".odp":[4,'PK\x03\x04'],
     ".ods":[4,'PK\x03\x04'],
     ".odt":[4,'PK\x03\x04'], 
 
     ".jar":[4,'PK\x03\x04'], 
     ".ttf": [5, '\x00\x01\x00\x00\x00'],
+    ".otf": [4, 'OTTO'],
     ".pyz":[3,'PYZ'],
-
+    
+    ".msi":[8, '\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
+    ".fbx": [18, 'Kaydara FBX Binary']
 }
 
 # yes my terminal looks nice
@@ -235,7 +243,7 @@ def analyze_folder(folder_path):
     # now handle grouped text files
     for (parent, base_name), variants in text_file_groups.items():
         print(f"\n{CYAN}📄 Group: {base_name}{RESET}")
-        best_candidate = None
+        best_candidates = []
         best_ratio = 1.0
 
         for file in variants:
@@ -253,29 +261,53 @@ def analyze_folder(folder_path):
             print(f"  - {file.name} | size: {size} bytes | non-printable ratio: {ratio:.3f}")
 
             if size > 0 and ratio < best_ratio:
-                best_candidate = file
+                best_candidates = [file] 
                 best_ratio = ratio
+                """
+                this next part is only true if the program has already encountered a
+                working file, meaning the working best ratio has been set to 0.000...
+                finding a file that is equal to this means that there is another
+                working file, and we cannot delete that so we save it too.
+                """
+            elif f"{ratio:.3f}" == f"{best_ratio:.3f}":
+                best_candidates.append(file)
             
-        if best_candidate:
-            print(f"  {GREEN}=> Keeping: {best_candidate.name}{RESET}")
+        if len(best_candidates) == 1: # only one file, proceed as normal
+            print(f"  {GREEN}=> Keeping: {best_candidates[0].name}{RESET}")
             base_name_file = parent / base_name
-            if (best_candidate.name != base_name and
-                (not base_name_file.exists() or base_name_file in text_deletions or base_name_file.resolve() != best_candidate.resolve())):
-                renames.append((best_candidate, base_name_file))
+            if (best_candidates[0].name != base_name and
+                (not base_name_file.exists() or base_name_file in text_deletions or base_name_file.resolve() != best_candidates[0].resolve())):
+                renames.append((best_candidates[0], base_name_file))
 
             for file in variants:
-                if file != best_candidate:
-                    if ratio == best_ratio:
-                        """
-                        this next part is only true if the program has already encountered a
-                        working file, meaning the working best ratio has been set to 0.000...
-                        finding a file that is equal to this means that this file is 
-                        also not corrupted but it contains some other data (may not be relevant)
-                        but we cannot delete that file just yet.
-                        """
-                        print(f"  {GREEN}=> Also Keeping: {file.name}{RESET}")
-                    else:
-                        text_deletions.append(file)
+                if file != best_candidates:
+                    text_deletions.append(file)
+
+        elif len(best_candidates) > 1:
+            # Pick the one closest to base_name as the "main" file
+            chosen = None
+            for candidate in best_candidates:
+                if candidate.name == base_name:
+                    chosen = candidate
+                    break
+            if not chosen:
+                # fallback to first best candidate
+                chosen = best_candidates[0]
+            
+            print(f"  {GREEN}=> Keeping (primary): {chosen.name}{RESET}")
+            base_name_file = parent / base_name
+            if (chosen.name != base_name and
+                (not base_name_file.exists() or base_name_file in text_deletions or base_name_file.resolve() != chosen.resolve())):
+                renames.append((chosen, base_name_file))
+
+            # Keep all best candidates, remove the rest
+            for candidate in best_candidates:
+                if candidate != chosen:
+                    print(f"  {GREEN}=> Keeping (also valid): {candidate.name}{RESET}")
+
+            for file in variants:
+                if file not in best_candidates:
+                    text_deletions.append(file)
 
         else:
             print(f"  {YELLOW}=> No valid text file found in group. Deleting all.{RESET}")

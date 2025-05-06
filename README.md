@@ -37,7 +37,7 @@ python ByteSweep.py "Path\To\Folder"
 - Images: `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.gif`
 - Audio files:  `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma` `.alac` `.opus`
 - Video files: `.mp4` `.m4v` `.avi` `.mov` `.mkv` `.webm` `.flv` `.wmv` `.mpeg` `.mpg`
-- Adobe: `.psd`
+- Adobe: `.psd`, `.aep`
 - Microsoft Office: `.docx` `.xlsx` `.pptx`
 - OpenDocument files: `.odp` `.ods` `.odt`
 - Blender Files: `.blend` `.blend1`

@@ -9,7 +9,8 @@
 - Supports a *wide* range of file types
 - Automatically **renames** files back to their correct names pre-duplication
 - Walks through the given directory **recursively**, making sure every file and subfolder is processed.
-- Automatically deletes(default, can be changed) AppleDouble meta files (prefixed with `.-`) )
+- Automatically deletes AppleDouble meta files (prefixed with `._`) by default.
+  - this can be changed in the code with the flag `delete_appledouble`
   
 ### Use case:
 - The folder contains files with the same names but with prefixes, (_1, _2, etc.). **Only one file works**, and the others are corrupted.

@@ -8,7 +8,15 @@
 - Detects and removes **redundant duplicates** of the same file type
 - Supports a *wide* range of file types
 - Automatically **renames** files back to their correct names pre-duplication
+- Walks through the given directory **recursively**, making sure every file and subfolder is processed.
   
+### Use case:
+- The folder contains files with the same names but with prefixes, (_1, _2, etc.). **Only one file works**, and the others are corrupted.
+![demo image showing 3 copies of corrupted files with only one having valid data](demo.png)
+- ByteSweep detects the **working file and deletes the others**, while also **renaming** (if needed) the file back to what it should have been named.
+  - In this case, ByteSweep deleted the corrupted files and **automatically** renamed `PlayerController_1.cs` to `PlayerController.cs` so that all references to that file work within in Unity editor.
+
+![gif showcasing the tool](demo.gif)
 #### Package Requirements:
 - **Python 3.7+**
 - **[Pillow](https://pypi.org/project/Pillow/)**
@@ -21,6 +29,7 @@ pip install Pillow
 ```bash
 python ByteSweep.py "Path\To\Folder"
 ```
+
 ## Supported Filetypes:
 - Partially or fully utf-8 endcoded files: `.html` `.css` `.js` `.txt` `.xml` `.json` `.ini` `.bat` `.log` `.cs` Unity project files, and more.
 - Images: `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.gif`

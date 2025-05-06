@@ -58,6 +58,7 @@ MISC_SIGNATURES = {
     ".rar":[7,'\x52\x61\x72\x21\x1A\x07\x00'],
     ".swf": [4, ("CWS", "FWS")],
     ".pyz":[3,'PYZ'],
+    ".exr":[4, '\x76\x2F\x31\x01'],
 
     #adobe
     ".pdf":[4, '%PDF'],

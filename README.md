@@ -40,10 +40,9 @@ python ByteSweep.py "Path\To\Folder"
 - Adobe: `.psd`, `.aep`
 - Microsoft Office: `.docx` `.xlsx` `.pptx`
 - OpenDocument files: `.odp` `.ods` `.odt`
-- Blender Files: `.blend` `.blend1`
+- 3D files: `.blend` `.blend1` `.obj`
 - Fonts: `.ttf` `.otf`
 - Other files: `.pdf` `.jar` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest` `.fbx`
-- Experimental but work so far: `.obj`
 
 **For the full list of supported files**, check out the code.
 

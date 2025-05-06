@@ -1,4 +1,4 @@
-# ByteSweep
+![logo](logo.png)
 **ByteSweep** is a lightweight command-line Python utility designed to detect and remove **corrupted** or **redundant duplicate files** in a directory — particularly useful for post-data recovery cleanup.
 
 ## Features

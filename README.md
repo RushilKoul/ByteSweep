@@ -9,7 +9,8 @@
 - Supports a *wide* range of file types
 - Automatically **renames** files back to their correct names pre-duplication
 - Walks through the given directory **recursively**, making sure every file and subfolder is processed.
-- Automatically deletes(default, can be changed) AppleDouble meta files (prefixed with `.-`) )
+- Automatically deletes AppleDouble meta files (prefixed with `._`) by default.
+  - this can be changed in the code with the flag `delete_appledouble`
   
 ### Use case:
 - The folder contains files with the same names but with prefixes, (_1, _2, etc.). **Only one file works**, and the others are corrupted.
@@ -36,13 +37,12 @@ python ByteSweep.py "Path\To\Folder"
 - Images: `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.webp` `.gif`
 - Audio files:  `.mp3` `.wav` `.flac` `.aac` `.ogg` `.m4a` `.wma` `.alac` `.opus`
 - Video files: `.mp4` `.m4v` `.avi` `.mov` `.mkv` `.webm` `.flv` `.wmv` `.mpeg` `.mpg`
-- Adobe: `.psd`
+- Adobe: `.psd`, `.aep`
 - Microsoft Office: `.docx` `.xlsx` `.pptx`
 - OpenDocument files: `.odp` `.ods` `.odt`
-- Blender Files: `.blend` `.blend1`
+- 3D files: `.blend` `.blend1` `.obj`
 - Fonts: `.ttf` `.otf`
 - Other files: `.pdf` `.jar` `.dll` `.exe` `.zip` `.ess` `.pyz` `.manifest` `.fbx`
-- Experimental but work so far: `.obj`
 
 **For the full list of supported files**, check out the code.
 

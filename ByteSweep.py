@@ -6,6 +6,7 @@ import string
 from PIL import Image  # images
 import subprocess # calling ffmpeg commands
 
+delete_appledouble = True
 
 IMAGE_EXTENSIONS = {
     ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp", ".gif", ".ico", ".tga"
@@ -180,9 +181,8 @@ def analyze_folder(folder_path):
 
     for file in Path(folder_path).rglob("*"):
         if file.is_file():
-
             # delete macos meta files
-            if file.name.startswith("._"):
+            if delete_appledouble and file.name.startswith("._"):
                 try:
                     file.unlink()
                     print(f"{RED}🗑️  Deleted AppleDouble metadata file:{RESET} {file}")

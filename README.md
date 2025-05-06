@@ -1,4 +1,4 @@
-![logo](logo.png)
+![logo](readme_assets/logo.png)
 **ByteSweep** is a lightweight command-line Python utility designed to detect and remove **corrupted** or **redundant duplicate files** in a directory — particularly useful for post-data recovery cleanup.
 
 ## Features
@@ -14,11 +14,11 @@
   
 ### Use case:
 - The folder contains files with the same names but with prefixes, (_1, _2, etc.). **Only one file works**, and the others are corrupted.
-![demo image showing 3 copies of corrupted files with only one having valid data](demo.png)
+![demo image showing 3 copies of corrupted files with only one having valid data](readme_assets/demo.png)
 - ByteSweep detects the **working file and deletes the others**, while also **renaming** (if needed) the file back to what it should have been named.
   - In this case, ByteSweep deleted the corrupted files and **automatically** renamed `PlayerController_1.cs` to `PlayerController.cs` so that all references to that file work within in Unity editor.
 
-![gif showcasing the tool](demo.gif)
+![gif showcasing the tool](readme_assets/demo.gif)
 #### Package Requirements:
 - **Python 3.7+**
 - **[Pillow](https://pypi.org/project/Pillow/)**
